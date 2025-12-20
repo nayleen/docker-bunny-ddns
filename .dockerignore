@@ -1,0 +1,8 @@
+.git/
+.github/
+.idea/
+.dockerignore
+.editorconfig
+.gitignore
+compose.yaml
+Dockerfile

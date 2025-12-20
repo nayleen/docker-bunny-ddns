@@ -1,0 +1,15 @@
+services:
+  app:
+    image: ghcr.io/nayleen/bunny-ddns:latest
+    build:
+      context: .
+    env_file: .env.local
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      start_interval: 1s
+      start_period: 30s
+    network_mode: host
+    restart: on-failure
+    volumes:
+      - $HOME/.composer:/app/var/composer
+      - ./:/app/src

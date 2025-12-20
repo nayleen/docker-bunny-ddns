@@ -1,0 +1,31 @@
+{
+  "name": "nayleen/bunny-ddns",
+  "type": "project",
+  "require": {
+    "php": ">=8.4",
+    "ext-pcntl": "*",
+    "ext-posix": "*",
+    "amphp/amp": "^3.1.1",
+    "amphp/dns": "^2.4",
+    "amphp/http-client": "^5.3.4",
+    "amphp/log": "^2.0.0",
+    "monolog/monolog": "^3.9.0",
+    "thecodingmachine/safe": "^3.3.0"
+  },
+  "require-dev": {
+    "ergebnis/composer-normalize": "^2.48",
+    "roave/security-advisories": "dev-latest"
+  },
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "BunnyDdns\\": "src/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "ergebnis/composer-normalize": true
+    },
+    "sort-packages": true
+  }
+}

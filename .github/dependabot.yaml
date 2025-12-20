@@ -1,0 +1,29 @@
+version: 2
+
+updates:
+  # daily updates of Composer dependencies
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "09:00"
+      timezone: Europe/Berlin
+    allow:
+      - dependency-type: "all"
+    open-pull-requests-limit: 10
+    rebase-strategy: auto
+    versioning-strategy: increase
+
+  # daily updates of GHA
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "09:00"
+      timezone: Europe/Berlin
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    rebase-strategy: auto
