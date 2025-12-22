@@ -63,6 +63,9 @@ jobs:
           context: .
           load: true
 
+      - name: Copy .env File
+        run: cp .env.example .env
+
       - name: Install Composer Dependencies
         run: docker compose run app composer install --prefer-dist --no-progress --no-interaction
 
