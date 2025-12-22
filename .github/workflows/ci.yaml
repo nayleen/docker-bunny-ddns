@@ -67,10 +67,10 @@ jobs:
         run: cp .env.example .env
 
       - name: Install Composer Dependencies
-        run: docker compose run app composer install --prefer-dist --no-progress --no-interaction
+        run: docker compose run --rm app composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run Tests
-        run: docker compose run app php vendor/bin/phpunit --colors=always
+        run: docker compose run --rm app php vendor/bin/phpunit --colors=always
 
   release:
     if: ${{ github.event_name == 'push' }}
