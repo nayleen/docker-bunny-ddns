@@ -1,0 +1,90 @@
+name: Build Image
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ${{ matrix.arch == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v6
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: nayleen
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+
+      - name: Custom Metadata
+        id: custom-metadata
+        run: |
+          BASE_IMAGE="ghcr.io/nayleen/php:8.4"
+          BASE_IMAGE_DIGEST=$(./tools/docker-image-digest.sh "$BASE_IMAGE")
+
+          echo "base-image=$BASE_IMAGE" >> $GITHUB_OUTPUT
+          echo "base-image-digest=$BASE_IMAGE_DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Docker Metadata
+        id: docker-metadata
+        uses: docker/metadata-action@v5
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest-descriptor,index-descriptor
+        with:
+          annotations: |
+            org.opencontainers.image.authors=https://github.com/nayleen
+            org.opencontainers.image.base.digest=${{ steps.custom-metadata.outputs.base-image-digest }}
+            org.opencontainers.image.base.name=${{ steps.custom-metadata.outputs.base-image }}
+            org.opencontainers.image.url=https://github.com/nayleen/docker-bunny-ddns/pkgs/container/bunny-ddns
+          images: ghcr.io/nayleen/bunny-ddns
+          tags: |
+            type=raw,value=${{ matrix.arch }}
+
+      - name: Build and Push Docker Images
+        uses: docker/build-push-action@v6
+        with:
+          annotations: ${{ steps.docker-metadata.outputs.annotations }}
+          cache-from: type=registry,ref=ghcr.io/nayleen/bunny-ddns:${{ matrix.arch }}-cache
+          cache-to: type=registry,ref=ghcr.io/nayleen/bunny-ddns:${{ matrix.arch }}-cache,mode=max
+          context: .
+          push: true
+          tags: ${{ steps.docker-metadata.outputs.tags }}
+
+  combine-manifests:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      packages: write
+    steps:
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: nayleen
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Combine Manifests
+        run: |
+          docker buildx imagetools create -t ghcr.io/nayleen/bunny-ddns:latest \
+            ghcr.io/nayleen/bunny-ddns:amd64 \
+            ghcr.io/nayleen/bunny-ddns:arm64

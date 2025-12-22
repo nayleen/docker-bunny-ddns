@@ -1,0 +1,46 @@
+name: Scheduled Build
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # every day at 1 AM
+  workflow_dispatch: # for debugging
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      packages: read
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v6
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: nayleen
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compare Base Image Digest with Latest Release
+        id: compare-base-image
+        run: |
+          BASE_IMAGE="ghcr.io/nayleen/php:8.4"
+          IMAGE="ghcr.io/nayleen/bunny-ddns:amd64"
+
+          if ./tools/compare-digests.sh "$IMAGE" "$BASE_IMAGE"; then
+            echo "rebuild=false" >> $GITHUB_OUTPUT
+          else
+            echo "rebuild=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Images
+        if: ${{ steps.compare-base-image.outputs.rebuild == 'true' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build.yaml

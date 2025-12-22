@@ -6,14 +6,21 @@
     "ext-pcntl": "*",
     "ext-posix": "*",
     "amphp/amp": "^3.1.1",
-    "amphp/dns": "^2.4",
+    "amphp/dns": "^2.4.0",
+    "amphp/file": "^3.2.0",
     "amphp/http-client": "^5.3.4",
     "amphp/log": "^2.0.0",
+    "amphp/parallel": "^2.3.3",
     "monolog/monolog": "^3.9.0",
     "thecodingmachine/safe": "^3.3.0"
   },
   "require-dev": {
-    "ergebnis/composer-normalize": "^2.48",
+    "ergebnis/composer-normalize": "^2.48.2",
+    "nayleen/codestandard": "dev-latest",
+    "phpstan/extension-installer": "^1.4.3",
+    "phpstan/phpstan": "^2.1.33",
+    "phpstan/phpstan-phpunit": "^2.0.11",
+    "phpunit/phpunit": "^12.5.4",
     "roave/security-advisories": "dev-latest"
   },
   "minimum-stability": "stable",
@@ -22,10 +29,21 @@
       "BunnyDdns\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "BunnyDdns\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "allow-plugins": {
-      "ergebnis/composer-normalize": true
+      "ergebnis/composer-normalize": true,
+      "phpstan/extension-installer": true
     },
     "sort-packages": true
+  },
+  "scripts": {
+    "post-update-cmd": [
+      "@composer normalize"
+    ]
   }
 }

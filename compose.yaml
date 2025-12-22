@@ -3,11 +3,12 @@ services:
     image: ghcr.io/nayleen/bunny-ddns:latest
     build:
       context: .
-    env_file: .env.local
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      start_interval: 1s
-      start_period: 30s
+    env_file: .env
+    environment:
+      LOG_LEVEL: debug
+      PHP_INI_TEMPLATE_FILE: development
+      UPDATE_INTERVAL: 10
+      XDEBUG_MODE: debug,develop
     network_mode: host
     restart: on-failure
     volumes:

@@ -2,4 +2,8 @@
 vendor/
 .DS_Store
 .env*
+!.env.example
+.php-cs-fixer.php
 compose*.yml
+phpstan.neon
+phpunit.xml

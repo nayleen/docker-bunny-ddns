@@ -1,8 +1,16 @@
 .git/
 .github/
 .idea/
+tests/
+tools/
 .dockerignore
 .editorconfig
+.env*
 .gitignore
+.php-cs-fixer*.php
 compose.yaml
 Dockerfile
+Makefile
+phpstan.neon*
+phpunit.xml*
+README.md
