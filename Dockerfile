@@ -7,4 +7,4 @@ RUN --mount=type=cache,target=/app/var/composer,uid=1000 \
 
 COPY --link --chown=1000:1000 ./ /app/src/
 
-CMD ["php", "/app/src/app.php"]
+CMD ["php", "-dopcache.enable_cli=0", "/app/src/app.php"]

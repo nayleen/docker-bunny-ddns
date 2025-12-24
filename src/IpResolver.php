@@ -2,18 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace BunnyDdns\Task;
+namespace BunnyDdns;
 
 use Amp\Cancellation;
 use Amp\Http\Client\DelegateHttpClient;
 use Amp\Http\Client\HttpClientBuilder;
 use Amp\Http\Client\Request;
-use Amp\Parallel\Worker\Task;
-use Amp\Sync\Channel;
+use Amp\NullCancellation;
 use RuntimeException;
 use Throwable;
 
-final class GetCurrentIp implements Task
+final class IpResolver
 {
     private DelegateHttpClient $httpClient;
 
@@ -30,9 +29,7 @@ final class GetCurrentIp implements Task
 
     public function __construct(?DelegateHttpClient $httpClient = null)
     {
-        if (isset($httpClient)) {
-            $this->httpClient = $httpClient;
-        }
+        $this->httpClient = $httpClient ?? HttpClientBuilder::buildDefault();
     }
 
     /**
@@ -51,7 +48,7 @@ final class GetCurrentIp implements Task
             foreach ($lines as $line) {
                 if (str_starts_with($line, 'ip=')) {
                     $ip = trim(substr($line, 3));
-                    assert($ip !== '');
+                    assert($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false);
 
                     return $ip;
                 }
@@ -59,15 +56,13 @@ final class GetCurrentIp implements Task
         }
 
         $ip = trim(explode("\n", $response)[0]);
-        assert($ip !== '');
+        assert($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false);
 
         return $ip;
     }
 
-    public function run(Channel $channel, Cancellation $cancellation): string
+    public function run(Cancellation $cancellation = new NullCancellation()): string
     {
-        $httpClient = $this->httpClient ?? HttpClientBuilder::buildDefault();
-
         $index = 0;
         $maxIndex = count(self::IP_LOOKUP_SERVICES);
 
@@ -75,7 +70,7 @@ final class GetCurrentIp implements Task
             $serviceUrl = self::IP_LOOKUP_SERVICES[$index++];
 
             try {
-                $response = $httpClient->request(new Request($serviceUrl), $cancellation);
+                $response = $this->httpClient->request(new Request($serviceUrl), $cancellation);
                 $body = $response->getBody()->buffer($cancellation);
                 assert($body !== '');
 

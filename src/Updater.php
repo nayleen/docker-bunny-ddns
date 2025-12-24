@@ -5,10 +5,6 @@ declare(strict_types = 1);
 namespace BunnyDdns;
 
 use Amp;
-use Amp\Parallel\Worker;
-use BunnyDdns\Task\GetCurrentIp;
-use BunnyDdns\Task\ResolveZoneIds;
-use BunnyDdns\Task\UpdateZoneRecord;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
@@ -18,9 +14,9 @@ use Revolt\EventLoop;
  */
 final class Updater
 {
-    private string $currentIp = self::IP_STARTUP_VALUE;
+    private Client $client;
 
-    private readonly Worker\WorkerPool $workerPool;
+    private string $currentIp = self::IP_STARTUP_VALUE;
 
     private readonly Zones $zones;
 
@@ -28,24 +24,20 @@ final class Updater
 
     public function __construct(
         private readonly Config $config,
+        ?Client $client = null,
+        private readonly IpResolver $ipResolver = new IpResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
-        ?Worker\WorkerPool $workerPool = null,
     ) {
-        $this->workerPool = $workerPool ?? Worker\workerPool();
+        $this->client = $client ?? new Client($this->config);
         $this->zones = new Zones();
     }
 
     private function resolveZoneIds(): void
     {
-        $task = new ResolveZoneIds($this->config->apiKey);
-
         $futures = [];
-        foreach ($this->config->zoneNames as $name) {
-            $resolveTask = $this->workerPool->submit($task);
-            $resolveTask->getChannel()->send($name);
 
-            $futures[] = $resolveTask
-                ->getFuture()
+        foreach ($this->config->zoneNames as $name) {
+            $futures[] = Amp\async($this->client->resolveZone(...), $name)
                 ->map(fn (Zone $zone) => $this->zones->set($zone)); // @phpstan-ignore-line
         }
 
@@ -54,11 +46,9 @@ final class Updater
         assert($this->zones->count() === count($this->config->zoneNames));
     }
 
-    private function updateOnIpChange(): void
+    private function updateCheck(): void
     {
-        static $task = new GetCurrentIp();
-
-        $ip = $this->workerPool->submit($task)->await(); // @phpstan-ignore-line
+        $ip = Amp\async($this->ipResolver->run(...))->await();
         assert(is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP) !== false);
 
         $changed = $this->currentIp !== $ip;
@@ -88,15 +78,10 @@ final class Updater
 
     private function updateZones(string $ip): void
     {
-        static $task = new UpdateZoneRecord($this->config->apiKey);
-
         $futures = [];
-        foreach ($this->zones as $zone) {
-            $updateTask = $this->workerPool->submit($task); // @phpstan-ignore-line
-            $updateTask->getChannel()->send([$zone, $ip]);
 
-            $futures[] = $updateTask
-                ->getFuture()
+        foreach ($this->zones as $zone) {
+            $futures[] = Amp\async($this->client->updateZoneRecord(...), $zone, $ip)
                 ->map(fn () => $this->logger->debug('Updated zone record for "{zone}"', [
                     'zone' => $zone->name,
                 ]));
@@ -111,13 +96,13 @@ final class Updater
         $this->resolveZoneIds();
 
         if ($this->config->updateOnStart) {
-            $this->updateOnIpChange();
+            $this->updateCheck();
         }
 
         // schedule periodic IP + update checks
         EventLoop::unreference(EventLoop::repeat(
             $this->config->updateInterval,
-            $this->updateOnIpChange(...),
+            $this->updateCheck(...),
         ));
     }
 
@@ -125,6 +110,7 @@ final class Updater
     {
         return [
             'config' => $this->config,
+            'zones' => $this->zones->names(),
         ];
     }
 }

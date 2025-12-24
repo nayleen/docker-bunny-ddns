@@ -34,6 +34,7 @@ final readonly class Logger
 
         $logger = new Monolog('bunny-ddns');
         $logger->pushHandler($logHandler);
+        $logger->useLoggingLoopDetection(false);
 
         EventLoop::setErrorHandler(function (Throwable $throwable) use ($logger): void {
             $logger->error($throwable->getMessage(), ['exception' => $throwable]);

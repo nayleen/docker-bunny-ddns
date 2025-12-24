@@ -1,8 +1,7 @@
 parameters:
-    ignoreErrors:
-        - identifier: missingType.generics
     level: 10
     paths:
+        - app.php
         - src
         - tests
     tipsOfTheDay: false

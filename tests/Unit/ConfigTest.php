@@ -20,7 +20,7 @@ final class ConfigTest extends TestCase
     /**
      * @var array<non-empty-string, non-empty-string>
      */
-    private const array VALID_ENV = [
+    private const array VALID_PARAMETERS = [
         'API_KEY' => '00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000',
         'ZONES' => 'example.com',
     ];
@@ -31,25 +31,24 @@ final class ConfigTest extends TestCase
     public static function configAssertions(): iterable
     {
         yield 'missing API key' => [
-            'env' => array_intersect_assoc(self::VALID_ENV, array_flip(['ZONES'])),
+            'parameters' => array_intersect_assoc(self::VALID_PARAMETERS, array_flip(['ZONES'])),
         ];
 
         yield 'missing zones' => [
-            'env' => array_intersect_assoc(self::VALID_ENV, array_flip(['API_KEY'])),
+            'parameters' => array_intersect_assoc(self::VALID_PARAMETERS, array_flip(['API_KEY'])),
         ];
     }
 
     /**
-     * @param array<non-empty-string, mixed> $env
-     * @return void
+     * @param array<non-empty-string, mixed> $parameters
      */
-    #[Test]
     #[DataProvider('configAssertions')]
-    public function create_asserts_mandatory_config(array $env): void
+    #[Test]
+    public function create_asserts_mandatory_config(array $parameters): void
     {
         self::expectException(RuntimeException::class);
 
-        Config::create($env, []);
+        Config::create($parameters);
     }
 
     #[Test]
@@ -57,12 +56,12 @@ final class ConfigTest extends TestCase
     {
         $apiKeyFile = dirname(__DIR__) . '/Fixtures/api_key_file.txt';
 
-        $env = [
+        $parameters = [
             'API_KEY_FILE' => $apiKeyFile,
             'ZONES' => 'example.com',
         ];
 
-        $config = Config::create($env, []);
+        $config = Config::create($parameters);
 
         self::assertSame($config->apiKey, trim(Safe\file_get_contents($apiKeyFile)));
     }
@@ -70,10 +69,10 @@ final class ConfigTest extends TestCase
     #[Test]
     public function create_reads_log_level(): void
     {
-        $env = self::VALID_ENV;
-        $env['LOG_LEVEL'] = 'ALERT';
+        $parameters = self::VALID_PARAMETERS;
+        $parameters['LOG_LEVEL'] = 'ALERT';
 
-        $config = Config::create($env, []);
+        $config = Config::create($parameters);
 
         self::assertSame(Level::Alert, $config->logLevel);
     }
@@ -81,10 +80,10 @@ final class ConfigTest extends TestCase
     #[Test]
     public function create_reads_update_interval(): void
     {
-        $env = self::VALID_ENV;
-        $env['UPDATE_INTERVAL'] = '3600';
+        $parameters = self::VALID_PARAMETERS;
+        $parameters['UPDATE_INTERVAL'] = '3600';
 
-        $config = Config::create($env, []);
+        $config = Config::create($parameters);
 
         self::assertSame(3600, $config->updateInterval);
     }
@@ -92,10 +91,10 @@ final class ConfigTest extends TestCase
     #[Test]
     public function create_reads_update_on_start(): void
     {
-        $env = self::VALID_ENV;
-        $env['UPDATE_ON_START'] = '0';
+        $parameters = self::VALID_PARAMETERS;
+        $parameters['UPDATE_ON_START'] = '0';
 
-        $config = Config::create($env, []);
+        $config = Config::create($parameters);
 
         self::assertFalse($config->updateOnStart);
     }

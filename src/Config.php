@@ -41,14 +41,12 @@ final readonly class Config
     }
 
     /**
-     * @param array<non-empty-string, mixed> $env
-     * @param array<non-empty-string, mixed> $server
+     * @param array<non-empty-string, mixed> $parameters
      */
-    public static function create(array $env, array $server): self
+    public static function create(array $parameters = []): self
     {
-        $apiKey = self::loadApiKeyFromSecret($env, $server)
-            ?? $env['API_KEY']
-            ?? $server['API_KEY']
+        $apiKey = self::loadApiKeyFromSecret($parameters)
+            ?? $parameters['API_KEY']
             ?? throw new RuntimeException('Bunny API key not provided in API_KEY or API_KEY_FILE environment variable');
 
         assert(is_string($apiKey) && $apiKey !== '');
@@ -57,9 +55,7 @@ final readonly class Config
             throw new InvalidArgumentException('Invalid Bunny API key format provided in API_KEY environment variable');
         }
 
-        $logLevel = $env['LOG_LEVEL']
-            ?? $server['LOG_LEVEL']
-            ?? self::DEFAULT_LOG_LEVEL;
+        $logLevel = $parameters['LOG_LEVEL'] ?? self::DEFAULT_LOG_LEVEL;
 
         try {
             $logLevel = Level::fromName($logLevel); // @phpstan-ignore-line
@@ -67,9 +63,7 @@ final readonly class Config
             throw new InvalidArgumentException('Invalid log level provided in LOG_LEVEL environment variable');
         }
 
-        $updateInterval = $env['UPDATE_INTERVAL']
-            ?? $server['UPDATE_INTERVAL']
-            ?? self::DEFAULT_UPDATE_INTERVAL;
+        $updateInterval = $parameters['UPDATE_INTERVAL'] ?? self::DEFAULT_UPDATE_INTERVAL;
 
         if (!is_numeric($updateInterval)) {
             throw new InvalidArgumentException('Invalid update interval provided in UPDATE_INTERVAL environment variable');
@@ -81,9 +75,7 @@ final readonly class Config
             throw new UnexpectedValueException('Invalid update interval provided in UPDATE_INTERVAL environment variable');
         }
 
-        $updateOnStart = $env['UPDATE_ON_START']
-            ?? $server['UPDATE_ON_START']
-            ?? true;
+        $updateOnStart = $parameters['UPDATE_ON_START'] ?? true;
 
         $updateOnStart = filter_var($updateOnStart, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
 
@@ -91,7 +83,7 @@ final readonly class Config
             throw new InvalidArgumentException('Invalid value provided in UPDATE_ON_START environment variable');
         }
 
-        $zones = $env['ZONES'] ?? $server['ZONES'] ?? '';
+        $zones = $parameters['ZONES'] ?? '';
         assert(is_string($zones));
 
         $zoneNames = array_filter(
@@ -113,17 +105,13 @@ final readonly class Config
     }
 
     /**
-     * @param array<non-empty-string, mixed> $env
-     * @param array<non-empty-string, mixed> $server
+     * @param array<non-empty-string, mixed> $parameters
      * @return non-empty-string|null
      */
     private static function loadApiKeyFromSecret(
-        array $env,
-        array $server,
+        array $parameters,
     ): ?string {
-        $path = $env['API_KEY_FILE']
-            ?? $server['API_KEY_FILE']
-            ?? null;
+        $path = $parameters['API_KEY_FILE'] ?? null;
 
         if ($path === null) {
             return null;
