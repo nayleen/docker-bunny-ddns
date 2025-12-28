@@ -30,6 +30,7 @@ final readonly class Config
      */
     public function __construct(
         #[SensitiveParameter] public string $apiKey,
+        public bool $autoCreateZones,
         public Level $logLevel,
         public int $updateInterval,
         public bool $updateOnStart,
@@ -55,6 +56,13 @@ final readonly class Config
             throw new InvalidArgumentException('Invalid Bunny API key format provided in API_KEY environment variable');
         }
 
+        $autoCreateZones = $parameters['AUTO_CREATE_ZONES'] ?? true;
+        $autoCreateZones = filter_var($autoCreateZones, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+
+        if ($autoCreateZones === null) {
+            throw new InvalidArgumentException('Invalid value provided in AUTO_CREATE_ZONES environment variable');
+        }
+
         $logLevel = $parameters['LOG_LEVEL'] ?? self::DEFAULT_LOG_LEVEL;
 
         try {
@@ -76,7 +84,6 @@ final readonly class Config
         }
 
         $updateOnStart = $parameters['UPDATE_ON_START'] ?? true;
-
         $updateOnStart = filter_var($updateOnStart, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
 
         if ($updateOnStart === null) {
@@ -97,11 +104,21 @@ final readonly class Config
 
         return new self(
             $apiKey,
+            $autoCreateZones,
             $logLevel,
             $updateInterval,
             $updateOnStart,
             $zoneNames,
         );
+    }
+
+    public static function fromGlobals(): self
+    {
+        $parameters = array_filter($_SERVER, function ($key) {
+            return is_string($key) && $key !== '';
+        }, ARRAY_FILTER_USE_KEY);
+
+        return self::create($parameters);
     }
 
     /**
@@ -136,6 +153,7 @@ final readonly class Config
     {
         return [
             'api_key' => '***sensitive***',
+            'auto_create_zones' => $this->autoCreateZones,
             'log_level' => $this->logLevel->getName(),
             'update_interval' => $this->updateInterval,
             'update_on_start' => $this->updateOnStart,

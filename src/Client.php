@@ -14,6 +14,8 @@ use OutOfBoundsException;
 use RuntimeException;
 use Safe;
 
+use function Symfony\Component\String\s;
+
 /**
  * @psalm-type BunnyDnsZoneItem = array{
  *     Id: int,
@@ -48,7 +50,7 @@ final readonly class Client
     }
 
     /**
-     * @param 'GET'|'POST' $method
+     * @param 'GET'|'POST'|'PUT' $method
      * @param non-empty-string $uri
      */
     private function request(string $method, string $uri, string $body = ''): Request
@@ -68,6 +70,64 @@ final readonly class Client
 
         return $request;
     }
+
+    /**
+     * @param non-empty-string $name
+     */
+    public function createZone(string $name, Cancellation $cancellation = new NullCancellation()): Zone
+    {
+        assert($name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN) !== false);
+
+        // create the zone
+        $request = $this->request(
+            method: 'POST',
+            uri: '/dnszone',
+            body: Safe\json_encode([
+                'Domain' => $name,
+            ]),
+        );
+
+        $response = $this->httpClient->request($request, $cancellation);
+        unset($request);
+
+        if ($response->getStatus() !== HttpStatus::CREATED) {
+            throw new RuntimeException('Failed to create zone ' . $name);
+        }
+
+        $body = $response->getBody()->buffer($cancellation);
+        $data = Safe\json_decode($body, true);
+        unset($body);
+
+        assert(isset($data['Id']) && is_int($data['Id']));
+        $zoneId = (string) $data['Id'];
+
+        // create the A record
+        $request = $this->request(
+            method: 'PUT',
+            uri: sprintf('/dnszone/%s/records', urlencode($zoneId)),
+            body: Safe\json_encode([
+                'Type' => self::RECORD_TYPE_A,
+                'Value' => '127.0.0.1',
+            ]),
+        );
+
+        $response = $this->httpClient->request($request, $cancellation);
+        unset($request);
+
+        if ($response->getStatus() !== HttpStatus::CREATED) {
+            throw new RuntimeException('Failed to create A record for zone ' . $name);
+        }
+
+        $body = $response->getBody()->buffer($cancellation);
+        $data = Safe\json_decode($body, true);
+        unset($body);
+
+        assert(isset($data['Id']) && is_int($data['Id']));
+        $recordId = (string) $data['Id'];
+
+        return new Zone($name, $zoneId, $recordId);
+    }
+
 
     /**
      * @param non-empty-string $name
@@ -133,7 +193,7 @@ final readonly class Client
         $response = $this->httpClient->request($request, new NullCancellation());
 
         if ($response->getStatus() !== HttpStatus::NO_CONTENT) {
-            throw new RuntimeException('Failed to update DNS record for zone ' . $zone->name);
+            throw new RuntimeException('Failed to update A record for zone ' . $zone->name);
         }
     }
 }

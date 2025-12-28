@@ -11,23 +11,7 @@ use function Amp\trapSignal;
 require __DIR__ . '/vendor/autoload.php';
 
 // parse config
-$parameters = [];
-
-foreach ($_ENV as $key => $value) {
-    if (is_string($key) && $key !== '') {
-        $parameters[$key] = $value;
-    }
-}
-
-foreach ($_SERVER as $key => $value) {
-    if (is_string($key) && $key !== '') {
-        $parameters[$key] = $value;
-    }
-}
-
-var_dump($parameters);
-
-$config = Config::create($parameters);
+$config = Config::fromGlobals();
 
 // bootstrap
 $httpClient = HttpClientBuilder::buildDefault();

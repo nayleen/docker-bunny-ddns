@@ -8,6 +8,7 @@ use Amp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
+use Throwable;
 
 /**
  * @api
@@ -38,7 +39,18 @@ final class Updater
 
         foreach ($this->config->zoneNames as $name) {
             $futures[] = Amp\async($this->client->resolveZone(...), $name)
-                ->map(fn (Zone $zone) => $this->zones->set($zone)); // @phpstan-ignore-line
+                ->catch(function (Throwable $error) use ($name) {
+                    if (!$this->config->autoCreateZones) {
+                        throw $error;
+                    }
+
+                    $this->logger->notice('Zone "{name}" not found, creating it', [
+                        'name' => $name,
+                    ]);
+
+                    return $this->client->createZone($name);
+                })
+                ->map(fn (Zone $zone) => $this->zones->set($zone));
         }
 
         Amp\Future\awaitAll($futures);
