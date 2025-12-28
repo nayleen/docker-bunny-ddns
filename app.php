@@ -18,6 +18,7 @@ foreach ($_ENV as $key => $value) {
         $parameters[$key] = $value;
     }
 }
+var_dump($parameters);
 
 $config = Config::create($parameters);
 
