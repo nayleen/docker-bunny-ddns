@@ -18,6 +18,13 @@ foreach ($_ENV as $key => $value) {
         $parameters[$key] = $value;
     }
 }
+
+foreach ($_SERVER as $key => $value) {
+    if (is_string($key) && $key !== '') {
+        $parameters[$key] = $value;
+    }
+}
+
 var_dump($parameters);
 
 $config = Config::create($parameters);
