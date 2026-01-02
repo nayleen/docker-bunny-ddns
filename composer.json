@@ -10,7 +10,7 @@
     "amphp/file": "^3.2.0",
     "amphp/http-client": "^5.3.4",
     "amphp/log": "^2.0.0",
-    "monolog/monolog": "^3.9.0",
+    "monolog/monolog": "^3.10.0",
     "thecodingmachine/safe": "^3.3.0"
   },
   "require-dev": {
