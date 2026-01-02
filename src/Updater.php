@@ -17,10 +17,16 @@ final class Updater
 {
     private Client $client;
 
+    /**
+     * @var non-empty-string
+     */
     private string $currentIp = self::IP_STARTUP_VALUE;
 
     private readonly Zones $zones;
 
+    /**
+     * @var non-empty-string
+     */
     private const string IP_STARTUP_VALUE = '__MISSING';
 
     public function __construct(
@@ -61,7 +67,7 @@ final class Updater
     private function updateCheck(): void
     {
         $ip = Amp\async($this->ipResolver->run(...))->await();
-        assert(is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP) !== false);
+        assert(is_string($ip) && $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false);
 
         $changed = $this->currentIp !== $ip;
 
@@ -75,20 +81,28 @@ final class Updater
                 'zones' => $this->zones->names(),
             ]);
 
-            $this->updateZones($ip);
-            $this->currentIp = $ip;
+            try {
+                $this->updateZones($ip)
+                    ->map(fn () => $this->currentIp = $ip)
+                    ->await();
+
+                assert($this->currentIp === $ip);
+            } catch (Throwable) {
+                $this->logger->error('Failed to update DNS zone records');
+            }
         } else {
             $this->logger->info('IP address unchanged, no update needed');
         }
-
-        assert($this->currentIp === $ip);
 
         $this->logger->info('Running next check in {interval} seconds', [
             'interval' => $this->config->updateInterval,
         ]);
     }
 
-    private function updateZones(string $ip): void
+    /**
+     * @param non-empty-string $ip
+     */
+    private function updateZones(string $ip): Amp\Future // @phpstan-ignore-line
     {
         $futures = [];
 
@@ -99,7 +113,9 @@ final class Updater
                 ]));
         }
 
-        Amp\Future\awaitAll($futures);
+        Amp\Future\await($futures);
+
+        return Amp\Future::complete();
     }
 
     public function run(): void
