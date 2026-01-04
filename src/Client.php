@@ -14,8 +14,6 @@ use OutOfBoundsException;
 use RuntimeException;
 use Safe;
 
-use function Symfony\Component\String\s;
-
 /**
  * @psalm-type BunnyDnsZoneItem = array{
  *     Id: int,
@@ -98,6 +96,9 @@ final readonly class Client
         $data = Safe\json_decode($body, true);
         unset($body);
 
+        /**
+         * @phpstan-var BunnyDnsZoneRecord $data
+         */
         assert(isset($data['Id']) && is_int($data['Id']));
         $zoneId = (string) $data['Id'];
 
@@ -122,12 +123,14 @@ final readonly class Client
         $data = Safe\json_decode($body, true);
         unset($body);
 
+        /**
+         * @phpstan-var BunnyDnsZoneRecord $data
+         */
         assert(isset($data['Id']) && is_int($data['Id']));
         $recordId = (string) $data['Id'];
 
         return new Zone($name, $zoneId, $recordId);
     }
-
 
     /**
      * @param non-empty-string $name

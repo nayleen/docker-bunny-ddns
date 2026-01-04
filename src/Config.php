@@ -114,9 +114,7 @@ final readonly class Config
 
     public static function fromGlobals(): self
     {
-        $parameters = array_filter($_SERVER, function ($key) {
-            return is_string($key) && $key !== '';
-        }, ARRAY_FILTER_USE_KEY);
+        $parameters = array_filter($_SERVER, fn ($key) => is_string($key) && $key !== '', ARRAY_FILTER_USE_KEY);
 
         return self::create($parameters);
     }
