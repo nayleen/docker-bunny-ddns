@@ -31,6 +31,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  IMAGE_TAG: test
+  REGISTRY: localhost:5000
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -38,6 +42,11 @@ jobs:
       actions: write
       contents: read
       packages: read
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
       - name: Check Out
         uses: actions/checkout@v6
@@ -63,6 +72,8 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/nayleen/bunny-ddns:amd64-cache
           context: .
           load: true
+          push: true
+          tags: "${{ env.REGISTRY }}:${{ env.IMAGE_TAG }}"
 
       - name: Copy .env File
         run: cp .env.example .env
