@@ -73,7 +73,7 @@ jobs:
           context: .
           load: true
           push: true
-          tags: "${{ env.REGISTRY }}:${{ env.IMAGE_TAG }}"
+          tags: "${{ env.REGISTRY }}/${{ env.IMAGE_TAG }}"
 
       - name: Copy .env File
         run: cp .env.example .env
