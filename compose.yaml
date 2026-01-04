@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${REGISTRY:-ghcr.io/nayleen/bunny-ddns}:${IMAGE_TAG:-latest}
+    image: ${IMAGE:-ghcr.io/nayleen/bunny-ddns}:${IMAGE_TAG:-latest}
     build:
       context: .
     env_file: .env
