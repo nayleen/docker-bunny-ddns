@@ -1,6 +1,7 @@
 .git/
 .github/
 .idea/
+deploy/
 tests/
 tools/
 .dockerignore

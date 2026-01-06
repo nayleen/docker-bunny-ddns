@@ -1,6 +1,7 @@
 {
   "name": "nayleen/bunny-ddns",
   "type": "project",
+  "license": "MIT",
   "require": {
     "php": ">=8.5",
     "ext-ffi": "*",

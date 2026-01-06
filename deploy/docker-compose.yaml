@@ -1,0 +1,9 @@
+services:
+  ddns:
+    image: ghcr.io/nayleen/bunny-ddns:latest
+    environment:
+      API_KEY: "00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000"
+      LOG_LEVEL: notice
+      ZONES: "mydomain.com"
+    network_mode: host
+    user: 1000:1000

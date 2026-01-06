@@ -1,0 +1,22 @@
+networks:
+  host:
+    external: true
+    name: host
+
+secrets:
+  bunny_api_key:
+    name: bunny_api_key
+    external: true
+
+services:
+  ddns:
+    image: ghcr.io/nayleen/bunny-ddns:latest
+    environment:
+      API_KEY_FILE: /run/secrets/bunny_api_key
+      LOG_LEVEL: notice
+      ZONES: "mydomain.com"
+    networks:
+      - host
+    secrets:
+      - bunny_api_key
+    user: 1000:1000
