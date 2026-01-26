@@ -7783,16 +7783,16 @@
         },
         {
             "name": "symfony/process",
-            "version": "v8.0.3",
+            "version": "v8.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "0cbbd88ec836f8757641c651bb995335846abb78"
+                "reference": "10df72602d88c0a3fa685b822976a052611dd607"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/0cbbd88ec836f8757641c651bb995335846abb78",
-                "reference": "0cbbd88ec836f8757641c651bb995335846abb78",
+                "url": "https://api.github.com/repos/symfony/process/zipball/10df72602d88c0a3fa685b822976a052611dd607",
+                "reference": "10df72602d88c0a3fa685b822976a052611dd607",
                 "shasum": ""
             },
             "require": {
@@ -7824,7 +7824,7 @@
             "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/process/tree/v8.0.3"
+                "source": "https://github.com/symfony/process/tree/v8.0.4"
             },
             "funding": [
                 {
@@ -7844,7 +7844,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-19T10:01:18+00:00"
+            "time": "2026-01-23T11:07:10+00:00"
         },
         {
             "name": "symfony/service-contracts",
@@ -8155,5 +8155,5 @@
         "ext-posix": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
