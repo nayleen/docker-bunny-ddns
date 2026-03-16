@@ -77,6 +77,10 @@ final class IpResolver
                 $ip = $this->extractIp($body, $serviceUrl);
                 assert(filter_var($ip, FILTER_VALIDATE_IP));
 
+                if (str_ends_with($ip, '.0')) {
+                    continue;
+                }
+
                 return $ip;
             } catch (Throwable) {
             }
