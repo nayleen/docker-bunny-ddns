@@ -20,11 +20,10 @@ final class IpResolver
      * @var array<int, non-empty-string>
      */
     private const array IP_LOOKUP_SERVICES = [
-        'https://1.1.1.1/cdn-cgi/trace',
         'https://cloudflare.com/cdn-cgi/trace',
         'https://icanhazip.com/',
-        'https://api.ipify.org',
-        'https://api.my-ip.io/v2/ip.txt',
+        'https://api.ipify.org/',
+        'https://ifconfig.io/ip'
     ];
 
     public function __construct(?DelegateHttpClient $httpClient = null)
@@ -42,7 +41,7 @@ final class IpResolver
         $hostname = parse_url($serviceUrl, PHP_URL_HOST);
         assert(is_string($hostname) && $hostname !== '');
 
-        if (in_array($hostname, ['1.1.1.1', 'cloudflare.com'], true)) {
+        if ($hostname === 'cloudflare.com') {
             $lines = explode("\n", $response);
 
             foreach ($lines as $line) {
