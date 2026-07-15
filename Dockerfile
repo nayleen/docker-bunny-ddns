@@ -2,8 +2,9 @@ FROM ghcr.io/nayleen/php:8.5
 
 COPY --link --chown=1000:1000 ./composer.* /app/src/
 
-RUN --mount=type=cache,target=/app/var/composer,uid=1000 \
-    composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader
+RUN --mount=type=cache,target=/app/var/composer,uid=1000,gid=1000 \
+    setpriv --reuid=app --regid=app --init-groups \
+    composer install --no-dev --no-progress --no-scripts --prefer-dist --optimize-autoloader --strict-psr-autoloader
 
 COPY --link --chown=1000:1000 ./ /app/src/
 
