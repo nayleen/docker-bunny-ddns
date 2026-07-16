@@ -21,6 +21,7 @@ on:
     paths:
       - .github/workflows/ci.yaml
       - src/**
+      - tests/**
       - .dockerignore
       - app.php
       - compose.yaml
@@ -82,6 +83,12 @@ jobs:
 
       - name: Run Tests
         run: docker compose run --rm app php vendor/bin/phpunit --colors=always
+
+      - name: Run Static Analysis
+        run: docker compose run --rm app php vendor/bin/phpstan analyse --no-progress
+
+      - name: Check Coding Style
+        run: docker compose run --rm app php vendor/bin/php-cs-fixer check --diff
 
   release:
     if: ${{ github.event_name == 'push' }}

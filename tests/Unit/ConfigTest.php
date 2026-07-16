@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace BunnyDdns\Tests\Unit;
 
 use BunnyDdns\Config;
+use InvalidArgumentException;
 use Monolog\Level;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,15 +41,59 @@ final class ConfigTest extends TestCase
     }
 
     /**
-     * @param array<non-empty-string, mixed> $parameters
+     * @return iterable<string, array{array<non-empty-string, mixed>}>
      */
-    #[DataProvider('configAssertions')]
-    #[Test]
-    public function create_asserts_mandatory_config(array $parameters): void
+    public static function invalidConfig(): iterable
     {
-        self::expectException(RuntimeException::class);
+        foreach ([
+            'invalid API key' => ['API_KEY', 'invalid'],
+            'non-string API key' => ['API_KEY', []],
+            'invalid API key file' => ['API_KEY_FILE', []],
+            'invalid auto-create flag' => ['AUTO_CREATE_ZONES', 'maybe'],
+            'invalid log level' => ['LOG_LEVEL', 'verbose'],
+            'non-string log level' => ['LOG_LEVEL', []],
+            'non-numeric interval' => ['UPDATE_INTERVAL', 'soon'],
+            'non-positive interval' => ['UPDATE_INTERVAL', 0],
+            'invalid update-on-start flag' => ['UPDATE_ON_START', 'maybe'],
+            'invalid zone' => ['ZONES', 'not a domain'],
+            'non-string zones' => ['ZONES', []],
+        ] as $name => [$key, $value]) {
+            $parameters = self::VALID_PARAMETERS;
+            $parameters[$key] = $value;
 
-        Config::create($parameters);
+            yield $name => [$parameters];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, int, array<non-empty-string>}>
+     */
+    public static function invalidConstructorArguments(): iterable
+    {
+        yield 'empty API key' => ['', 30, ['example.com']];
+        yield 'non-positive interval' => [self::VALID_PARAMETERS['API_KEY'], 0, ['example.com']];
+        yield 'empty zones' => [self::VALID_PARAMETERS['API_KEY'], 30, []];
+    }
+
+    /**
+     * @param array<non-empty-string> $zones
+     */
+    #[DataProvider('invalidConstructorArguments')]
+    #[Test]
+    public function constructor_rejects_invalid_values(string $apiKey, int $interval, array $zones): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new Config($apiKey, true, Level::Info, $interval, true, $zones);
+    }
+
+    #[Test]
+    public function create_deduplicates_zones(): void
+    {
+        $parameters = self::VALID_PARAMETERS;
+        $parameters['ZONES'] = 'example.com,example.com';
+
+        self::assertSame(['example.com'], Config::create($parameters)->zoneNames);
     }
 
     #[Test]
@@ -97,5 +142,29 @@ final class ConfigTest extends TestCase
         $config = Config::create($parameters);
 
         self::assertFalse($config->updateOnStart);
+    }
+
+    /**
+     * @param array<non-empty-string, mixed> $parameters
+     */
+    #[DataProvider('invalidConfig')]
+    #[Test]
+    public function create_rejects_invalid_config(array $parameters): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Config::create($parameters);
+    }
+
+    /**
+     * @param array<non-empty-string, mixed> $parameters
+     */
+    #[DataProvider('configAssertions')]
+    #[Test]
+    public function create_requires_mandatory_config(array $parameters): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        Config::create($parameters);
     }
 }

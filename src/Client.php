@@ -10,26 +10,10 @@ use Amp\Http\Client\HttpClientBuilder;
 use Amp\Http\Client\Request;
 use Amp\Http\HttpStatus;
 use Amp\NullCancellation;
-use OutOfBoundsException;
 use RuntimeException;
 use Safe;
+use UnexpectedValueException;
 
-/**
- * @psalm-type BunnyDnsZoneItem = array{
- *     Id: int,
- *     Type: int,
- *     Name: string,
- * }
- *
- * @psalm-type BunnyDnsZoneRecord = array{
- *     Id: int,
- *     Records: array<int, BunnyDnsZoneItem>,
- * }
- *
- * @psalm-type BunnyDnsZoneResponse = array{
- *     Items: array<int, BunnyDnsZoneRecord>,
- * }
- */
 final readonly class Client
 {
     private DelegateHttpClient $httpClient;
@@ -74,7 +58,7 @@ final readonly class Client
      */
     public function createZone(string $name, Cancellation $cancellation = new NullCancellation()): Zone
     {
-        assert($name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN) !== false);
+        assert($name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false);
 
         // create the zone
         $request = $this->request(
@@ -89,17 +73,22 @@ final readonly class Client
         unset($request);
 
         if ($response->getStatus() !== HttpStatus::CREATED) {
-            throw new RuntimeException('Failed to create zone ' . $name);
+            throw new RuntimeException(sprintf(
+                'Failed to create zone %s: expected HTTP %d, got %d',
+                $name,
+                HttpStatus::CREATED,
+                $response->getStatus(),
+            ));
         }
 
         $body = $response->getBody()->buffer($cancellation);
         $data = Safe\json_decode($body, true);
         unset($body);
 
-        /**
-         * @phpstan-var BunnyDnsZoneRecord $data
-         */
-        assert(isset($data['Id']) && is_int($data['Id']));
+        if (!is_array($data) || !isset($data['Id']) || !is_int($data['Id'])) {
+            throw new UnexpectedValueException('Invalid response while creating zone ' . $name);
+        }
+
         $zoneId = (string) $data['Id'];
 
         // create the A record
@@ -116,17 +105,22 @@ final readonly class Client
         unset($request);
 
         if ($response->getStatus() !== HttpStatus::CREATED) {
-            throw new RuntimeException('Failed to create A record for zone ' . $name);
+            throw new RuntimeException(sprintf(
+                'Failed to create A record for zone %s: expected HTTP %d, got %d',
+                $name,
+                HttpStatus::CREATED,
+                $response->getStatus(),
+            ));
         }
 
         $body = $response->getBody()->buffer($cancellation);
         $data = Safe\json_decode($body, true);
         unset($body);
 
-        /**
-         * @phpstan-var BunnyDnsZoneRecord $data
-         */
-        assert(isset($data['Id']) && is_int($data['Id']));
+        if (!is_array($data) || !isset($data['Id']) || !is_int($data['Id'])) {
+            throw new UnexpectedValueException('Invalid response while creating A record for zone ' . $name);
+        }
+
         $recordId = (string) $data['Id'];
 
         return new Zone($name, $zoneId, $recordId);
@@ -135,9 +129,9 @@ final readonly class Client
     /**
      * @param non-empty-string $name
      */
-    public function resolveZone(string $name, Cancellation $cancellation = new NullCancellation()): Zone
+    public function resolveZone(string $name, Cancellation $cancellation = new NullCancellation()): ?Zone
     {
-        assert($name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN) !== false);
+        assert($name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false);
 
         $response = $this->httpClient->request(
             request: $this->request('GET', '/dnszone?search=' . urlencode($name)),
@@ -145,35 +139,66 @@ final readonly class Client
         );
 
         if ($response->getStatus() !== HttpStatus::OK) {
-            throw new RuntimeException('Failed to resolve zone ID for zone ' . $name);
+            throw new RuntimeException(sprintf(
+                'Failed to resolve zone %s: expected HTTP %d, got %d',
+                $name,
+                HttpStatus::OK,
+                $response->getStatus(),
+            ));
         }
 
         $body = $response->getBody()->buffer($cancellation);
         $data = Safe\json_decode($body, true);
         unset($body);
 
-        /**
-         * @phpstan-var BunnyDnsZoneResponse $data
-         */
-        if (!isset($data['Items']) || !is_array($data['Items']) || count($data['Items']) === 0) {
-            throw new OutOfBoundsException('Zone not found: ' . $name);
+        if (!is_array($data) || !isset($data['Items']) || !is_array($data['Items'])) {
+            throw new UnexpectedValueException('Invalid response while resolving zone ' . $name);
         }
 
-        $zoneId = (string) $data['Items'][0]['Id'];
-        $records = $data['Items'][0]['Records'];
+        $zoneData = null;
 
-        foreach ($records as $record) {
-            if (isset($record['Id'], $record['Type']) && $record['Type'] === self::RECORD_TYPE_A) {
-                $recordId = $record['Id'];
-                assert(is_int($recordId));
+        foreach ($data['Items'] as $item) {
+            if (!is_array($item) || !isset($item['Domain']) || !is_string($item['Domain'])) {
+                throw new UnexpectedValueException('Invalid response while resolving zone ' . $name);
+            }
 
-                $recordId = (string) $recordId;
+            if (strcasecmp($item['Domain'], $name) === 0) {
+                $zoneData = $item;
 
-                return new Zone($name, $zoneId, $recordId);
+                break;
             }
         }
 
-        throw new OutOfBoundsException('Zone not found: ' . $name);
+        if ($zoneData === null) {
+            return null;
+        }
+
+        if (!isset($zoneData['Id']) || !is_int($zoneData['Id'])) {
+            throw new UnexpectedValueException('Invalid response while resolving zone ' . $name);
+        }
+
+        $zoneId = (string) $zoneData['Id'];
+        $records = $zoneData['Records'] ?? [];
+
+        if (!is_array($records)) {
+            throw new UnexpectedValueException('Invalid response while resolving zone ' . $name);
+        }
+
+        foreach ($records as $record) {
+            if (!is_array($record)) {
+                throw new UnexpectedValueException('Invalid response while resolving zone ' . $name);
+            }
+
+            if (($record['Type'] ?? null) === self::RECORD_TYPE_A) {
+                if (!isset($record['Id']) || !is_int($record['Id'])) {
+                    throw new UnexpectedValueException('Invalid A record while resolving zone ' . $name);
+                }
+
+                return new Zone($name, $zoneId, (string) $record['Id']);
+            }
+        }
+
+        throw new UnexpectedValueException('Zone has no A record: ' . $name);
     }
 
     /**
@@ -196,7 +221,12 @@ final readonly class Client
         $response = $this->httpClient->request($request, new NullCancellation());
 
         if ($response->getStatus() !== HttpStatus::NO_CONTENT) {
-            throw new RuntimeException('Failed to update A record for zone ' . $zone->name);
+            throw new RuntimeException(sprintf(
+                'Failed to update A record for zone %s: expected HTTP %d, got %d',
+                $zone->name,
+                HttpStatus::NO_CONTENT,
+                $response->getStatus(),
+            ));
         }
     }
 }

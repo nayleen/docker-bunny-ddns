@@ -8,6 +8,7 @@ use Amp;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Revolt\EventLoop;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -44,22 +45,35 @@ final class Updater
         $futures = [];
 
         foreach ($this->config->zoneNames as $name) {
-            $futures[] = Amp\async($this->client->resolveZone(...), $name)
-                ->catch(function (Throwable $error) use ($name) {
+            /** @var Amp\Future<Zone|null> $future */
+            $future = Amp\async(fn (): ?Zone => $this->client->resolveZone($name));
+            $futures[] = $future
+                ->map(function (?Zone $zone) use ($name): void {
+                    if ($zone !== null) {
+                        $this->zones->set($zone);
+
+                        return;
+                    }
+
                     if (!$this->config->autoCreateZones) {
-                        throw $error;
+                        throw new RuntimeException('Zone not found: ' . $name);
                     }
 
                     $this->logger->notice('Zone "{name}" not found, creating it', [
                         'name' => $name,
                     ]);
 
-                    return $this->client->createZone($name);
-                })
-                ->map(fn (Zone $zone) => $this->zones->set($zone));
+                    $this->zones->set($this->client->createZone($name));
+                });
         }
 
-        Amp\Future\awaitAll($futures);
+        // awaitAll observes every future, avoiding unhandled errors
+        // from siblings still in flight
+        [$errors] = Amp\Future\awaitAll($futures);
+
+        if ($errors !== []) {
+            throw array_shift($errors);
+        }
 
         assert($this->zones->count() === count($this->config->zoneNames));
     }
@@ -82,13 +96,16 @@ final class Updater
             ]);
 
             try {
-                $this->updateZones($ip)
-                    ->map(fn () => $this->currentIp = $ip)
-                    ->await();
+                $this->updateZones($ip);
+                $this->currentIp = $ip;
 
                 assert($this->currentIp === $ip);
-            } catch (Throwable) {
-                $this->logger->error('Failed to update DNS zone records');
+            } catch (Throwable $error) {
+                $this->logger->error('Failed to update DNS zone records', [
+                    'exception' => $error,
+                    'ip' => $ip,
+                    'zones' => $this->zones->names(),
+                ]);
             }
         } else {
             $this->logger->info('IP address unchanged, no update needed');
@@ -102,7 +119,7 @@ final class Updater
     /**
      * @param non-empty-string $ip
      */
-    private function updateZones(string $ip): Amp\Future // @phpstan-ignore-line
+    private function updateZones(string $ip): void
     {
         $futures = [];
 
@@ -114,8 +131,6 @@ final class Updater
         }
 
         Amp\Future\await($futures);
-
-        return Amp\Future::complete();
     }
 
     public function run(): void

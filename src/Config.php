@@ -10,7 +10,8 @@ use Monolog\Level;
 use RuntimeException;
 use SensitiveParameter;
 use UnexpectedValueException;
-use UnhandledMatchError;
+
+use function Safe\preg_match;
 
 /**
  * @api
@@ -24,8 +25,6 @@ final readonly class Config
     private const int DEFAULT_UPDATE_INTERVAL = 30; // seconds
 
     /**
-     * @param non-empty-string $apiKey
-     * @param positive-int $updateInterval
      * @param non-empty-string[] $zoneNames
      */
     public function __construct(
@@ -36,9 +35,17 @@ final readonly class Config
         public bool $updateOnStart,
         public array $zoneNames,
     ) {
-        assert($this->apiKey !== '');
-        assert($this->updateInterval > 0);
-        assert(count($this->zoneNames) > 0);
+        if ($this->apiKey === '') {
+            throw new InvalidArgumentException('Bunny API key cannot be empty');
+        }
+
+        if ($this->updateInterval <= 0) {
+            throw new InvalidArgumentException('Update interval must be positive');
+        }
+
+        if ($this->zoneNames === []) {
+            throw new InvalidArgumentException('At least one DNS zone name is required');
+        }
     }
 
     /**
@@ -50,10 +57,12 @@ final readonly class Config
             ?? $parameters['API_KEY']
             ?? throw new RuntimeException('Bunny API key not provided in API_KEY or API_KEY_FILE environment variable');
 
-        assert(is_string($apiKey) && $apiKey !== '');
-
-        if (!preg_match(self::API_KEY_FORMAT, $apiKey)) {
-            throw new InvalidArgumentException('Invalid Bunny API key format provided in API_KEY environment variable');
+        if (
+            !is_string($apiKey)
+            || $apiKey === ''
+            || !preg_match(self::API_KEY_FORMAT, $apiKey)
+        ) {
+            throw new InvalidArgumentException('Invalid Bunny API key provided');
         }
 
         $autoCreateZones = $parameters['AUTO_CREATE_ZONES'] ?? true;
@@ -65,11 +74,14 @@ final readonly class Config
 
         $logLevel = $parameters['LOG_LEVEL'] ?? self::DEFAULT_LOG_LEVEL;
 
-        try {
-            $logLevel = Level::fromName($logLevel); // @phpstan-ignore-line
-        } catch (UnhandledMatchError) {
+        if (!is_string($logLevel)) {
             throw new InvalidArgumentException('Invalid log level provided in LOG_LEVEL environment variable');
         }
+
+        $logLevel = array_find(
+            Level::cases(),
+            static fn (Level $level): bool => strcasecmp($level->name, $logLevel) === 0,
+        ) ?? throw new InvalidArgumentException('Invalid log level provided in LOG_LEVEL environment variable');
 
         $updateInterval = $parameters['UPDATE_INTERVAL'] ?? self::DEFAULT_UPDATE_INTERVAL;
 
@@ -80,7 +92,7 @@ final readonly class Config
         $updateInterval = (int) $updateInterval;
 
         if ($updateInterval <= 0) {
-            throw new UnexpectedValueException('Invalid update interval provided in UPDATE_INTERVAL environment variable');
+            throw new InvalidArgumentException('Invalid update interval provided in UPDATE_INTERVAL environment variable');
         }
 
         $updateOnStart = $parameters['UPDATE_ON_START'] ?? true;
@@ -91,15 +103,20 @@ final readonly class Config
         }
 
         $zones = $parameters['ZONES'] ?? '';
-        assert(is_string($zones));
+
+        if (!is_string($zones)) {
+            throw new InvalidArgumentException('Invalid value provided in ZONES environment variable');
+        }
 
         $zoneNames = array_filter(
             explode(',', $zones),
-            static fn (string $name): bool => $name !== '' && filter_var($name, FILTER_VALIDATE_DOMAIN) !== false,
+            static fn (string $name): bool => $name !== ''
+                && filter_var($name, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false,
         );
+        $zoneNames = array_values(array_unique($zoneNames));
 
         if ($zoneNames === []) {
-            throw new UnexpectedValueException('No valid DNS zone names provided in ZONES environment variable');
+            throw new InvalidArgumentException('No valid DNS zone names provided in ZONES environment variable');
         }
 
         return new self(
@@ -132,7 +149,9 @@ final readonly class Config
             return null;
         }
 
-        assert(is_string($path) && $path !== '');
+        if (!is_string($path) || $path === '') {
+            throw new InvalidArgumentException('Invalid value provided in API_KEY_FILE environment variable');
+        }
 
         if (!File\exists($path)) {
             return null;

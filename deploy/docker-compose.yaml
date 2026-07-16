@@ -6,4 +6,4 @@ services:
       LOG_LEVEL: notice
       ZONES: "mydomain.com"
     network_mode: host
-    user: 1000:1000
+    user: 1000:0
