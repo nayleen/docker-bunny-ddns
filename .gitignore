@@ -1,7 +1,10 @@
 vendor/
+.task/
+coverage/
 .env*
 !.env.example
 .php-cs-fixer.php
 compose*.y?ml
 phpstan.neon
 phpunit.xml
+Taskfile.yaml

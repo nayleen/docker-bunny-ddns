@@ -2,7 +2,11 @@ name: Build Image
 
 on:
   workflow_call:
-  workflow_dispatch:
+    inputs:
+      version:
+        description: Image version to publish
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}
@@ -61,7 +65,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Combine Manifests
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          docker buildx imagetools create -t ghcr.io/nayleen/bunny-ddns:latest \
+          docker buildx imagetools create -t "ghcr.io/nayleen/bunny-ddns:${VERSION}" \
             ghcr.io/nayleen/bunny-ddns:amd64 \
             ghcr.io/nayleen/bunny-ddns:arm64

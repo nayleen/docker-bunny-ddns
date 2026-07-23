@@ -7,7 +7,7 @@ docker run -d \
   --name bunny-ddns-updater \
   -e API_KEY="00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000" \
   -e ZONES="mydomain.com" \
-  ghcr.io/nayleen/bunny-ddns:latest
+  ghcr.io/nayleen/bunny-ddns:1.0.0 # x-release-please-version
 ```
 
 ## Deployment Templates

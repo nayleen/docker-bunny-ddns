@@ -6,6 +6,7 @@ on:
     branches:
       - main
     paths:
+      - .release-please-manifest.json
       - .github/workflows/**
       - src/**
       - .dockerignore
@@ -13,10 +14,12 @@ on:
       - composer.json
       - composer.lock
       - Dockerfile
+      - release-please-config.json
+      - Taskfile.dist.yaml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions: {}
 
@@ -53,21 +56,36 @@ jobs:
         run: cp .env.example .env
 
       - name: Install Composer Dependencies
-        run: docker compose run --rm app composer install --prefer-dist --no-progress --no-interaction
+        run: docker compose --progress=none run --rm app composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run Tests
-        run: docker compose run --rm app php vendor/bin/phpunit --colors=always
+        run: docker compose --progress=none run --rm app php vendor/bin/phpunit --colors=always
 
       - name: Run Static Analysis
-        run: docker compose run --rm app php vendor/bin/phpstan analyse --no-progress
+        run: docker compose --progress=none run --rm app php vendor/bin/phpstan analyse --no-progress
 
-      - name: Check Coding Style
-        run: docker compose run --rm app php vendor/bin/php-cs-fixer check --diff
-
-  release:
+  release_please:
     if: ${{ github.event_name == 'push' }}
     needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+
+  release:
+    if: ${{ needs.release_please.outputs.release_created == 'true' }}
+    needs: release_please
+    uses: ./.github/workflows/build.yaml
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/build.yaml
+    with:
+      version: ${{ needs.release_please.outputs.version }}

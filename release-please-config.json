@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "extra-files": [
+        {
+          "path": "README.md",
+          "type": "generic"
+        },
+        {
+          "path": "deploy/docker-compose.yaml",
+          "type": "generic"
+        },
+        {
+          "path": "deploy/docker-swarm.yaml",
+          "type": "generic"
+        }
+      ],
+      "include-component-in-tag": false,
+      "initial-version": "1.0.0",
+      "release-type": "php"
+    }
+  }
+}
