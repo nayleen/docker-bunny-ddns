@@ -1,0 +1,131 @@
+version: '3'
+
+set:
+  - errexit
+  - nounset
+  - pipefail
+
+silent: true
+
+vars:
+  dc: docker compose
+  composer: '{{.dc}} --progress=none run --rm app composer'
+  php: '{{.dc}} --progress=none run --rm app php'
+
+tasks:
+  ci:
+    cmds:
+      - task: build
+      - task: test
+      - task: static
+      - task: check-style
+
+  prepare:
+    internal: true
+    cmd: cp .env.example .env
+    status:
+      - test -f .env
+
+  build:
+    cmd: '{{.dc}} build'
+    deps:
+      - prepare
+
+  check-style:
+    cmd: '{{.php}} vendor/bin/php-cs-fixer check --diff'
+    deps:
+      - install
+    sources:
+      - .php-cs-fixer.php
+      - .php-cs-fixer.dist.php
+      - app.php
+      - composer.lock
+      - src/**/*.php
+      - tests/**/*.php
+
+  clean:
+    cmd: '{{.dc}} down -t0 -v'
+
+  coverage:
+    cmd: '{{.dc}} --progress=none run --rm -e XDEBUG_MODE=coverage app php vendor/bin/phpunit --coverage-html=coverage/'
+    deps:
+      - install
+    generates:
+      - coverage/**/*
+    sources:
+      - composer.lock
+      - phpunit.xml
+      - phpunit.xml.dist
+      - src/**/*.php
+      - tests/**/*.php
+
+  fix-style:
+    cmd: '{{.php}} vendor/bin/php-cs-fixer fix'
+    deps:
+      - install
+
+  install:
+    aliases:
+      - composer
+    cmd: '{{.composer}} install --prefer-dist --no-progress --no-interaction'
+    deps:
+      - validate
+    generates:
+      - vendor/**/*
+    sources:
+      - composer.json
+      - composer.lock
+
+  run:
+    cmd: '{{.dc}} --progress=none run --rm app'
+    deps:
+      - install
+    interactive: true
+
+  shell:
+    cmd: '{{.dc}} --progress=none run --rm app bash'
+    deps:
+      - install
+    interactive: true
+
+  static:
+    aliases:
+      - phpstan
+    cmd: '{{.php}} vendor/bin/phpstan analyse --no-progress'
+    deps:
+      - install
+    sources:
+      - composer.lock
+      - phpstan.neon
+      - phpstan.neon.dist
+      - app.php
+      - src/**/*.php
+      - tests/**/*.php
+
+  test:
+    aliases:
+      - tests
+    cmd: '{{.php}} vendor/bin/phpunit --colors=always'
+    deps:
+      - install
+    sources:
+      - composer.lock
+      - phpunit.xml
+      - phpunit.xml.dist
+      - src/**/*.php
+      - tests/**/*.php
+
+  update:
+    aliases:
+      - upgrade
+    cmd: '{{.composer}} update --prefer-dist --no-progress --no-interaction'
+    deps:
+      - validate
+
+  validate:
+    cmd: '{{.composer}} validate --no-check-publish --no-interaction'
+    deps:
+      - build
+    sources:
+      - composer.json
+      - composer.lock
