@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/nayleen/docker-bunny-ddns/compare/v1.0.0...v1.0.1) (2026-07-23)
+
+
+### Miscellaneous Chores
+
+* **deps:** update docker/login-action digest to 06fb636 ([2258032](https://github.com/nayleen/docker-bunny-ddns/commit/22580326e423ca99adac69acd283c7bb4d99d9b3))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 6d6cc82 ([ad3bcd3](https://github.com/nayleen/docker-bunny-ddns/commit/ad3bcd315ac83c6a371ce8dcd7a2ea52c104e104))
+
 ## 1.0.0 (2026-07-23)
 
 
