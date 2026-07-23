@@ -3,7 +3,6 @@
 .idea/
 deploy/
 tests/
-tools/
 .dockerignore
 .editorconfig
 .env*
@@ -15,3 +14,4 @@ Makefile
 phpstan.neon*
 phpunit.xml*
 README.md
+renovate.json5

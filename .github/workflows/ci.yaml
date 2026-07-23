@@ -2,78 +2,52 @@ name: Continuous Integration
 
 on:
   pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    paths:
-      - .github/workflows/ci.yaml
-      - src/**
-      - tests/**
-      - .dockerignore
-      - app.php
-      - compose.yaml
-      - composer.json
-      - Dockerfile
   push:
     branches:
       - main
     paths:
-      - .github/workflows/ci.yaml
+      - .github/workflows/**
       - src/**
-      - tests/**
       - .dockerignore
       - app.php
-      - compose.yaml
       - composer.json
+      - composer.lock
       - Dockerfile
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 env:
-  IMAGE: localhost:5000/bunny-ddns
   IMAGE_TAG: test
 
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
-      actions: write
       contents: read
-      packages: read
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
     steps:
       - name: Check Out
-        uses: actions/checkout@v7
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          registry: ghcr.io
-          username: nayleen
-          password: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-        with:
-          driver-opts: network=host
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
       - name: Build Local Image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         env:
           DOCKER_BUILD_SUMMARY: false
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           cache-from: type=registry,ref=ghcr.io/nayleen/bunny-ddns:amd64-cache
           context: .
-          push: true
-          tags: "${{ env.IMAGE }}:${{ env.IMAGE_TAG }}"
+          load: true
+          push: false
+          tags: "ghcr.io/nayleen/bunny-ddns:${{ env.IMAGE_TAG }}"
 
       - name: Copy .env File
         run: cp .env.example .env
@@ -93,11 +67,7 @@ jobs:
   release:
     if: ${{ github.event_name == 'push' }}
     needs: test
-    runs-on: ubuntu-latest
     permissions:
-      actions: write
-    steps:
-      - name: Build Release Images
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: build.yaml
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build.yaml
