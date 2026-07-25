@@ -22,7 +22,7 @@
     "phpstan/extension-installer": "^1.4.3",
     "phpstan/phpstan": "^2.2.5",
     "phpstan/phpstan-phpunit": "^2.0.18",
-    "phpunit/phpunit": "^13.2.4",
+    "phpunit/phpunit": "^13.2.5",
     "roave/security-advisories": "dev-latest",
     "thecodingmachine/phpstan-safe-rule": "1.4.7"
   },
