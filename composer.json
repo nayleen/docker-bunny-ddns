@@ -20,7 +20,7 @@
     "friendsofphp/php-cs-fixer": "^3.95.17",
     "nayleen/codestandard": "dev-latest",
     "phpstan/extension-installer": "^1.4.3",
-    "phpstan/phpstan": "^2.2.5",
+    "phpstan/phpstan": "^2.2.6",
     "phpstan/phpstan-phpunit": "^2.0.18",
     "phpunit/phpunit": "^13.2.5",
     "roave/security-advisories": "dev-latest",
