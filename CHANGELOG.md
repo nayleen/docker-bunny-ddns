@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.1.0](https://github.com/nayleen/docker-bunny-ddns/compare/v1.0.0...v1.1.0) (2026-07-28)
+
+
+### Features
+
+* add health checks ([da0d3cd](https://github.com/nayleen/docker-bunny-ddns/commit/da0d3cdce6435aaa7ed3b13aaaae5798168f40cd))
+
+
+### Bug Fixes
+
+* **deps:** update dependency amphp/amp to ^3.1.3 ([6e51eb0](https://github.com/nayleen/docker-bunny-ddns/commit/6e51eb02d962808c30a0efca6abb2857da9ae1c2))
+
+
+### Miscellaneous Chores
+
+* **deps:** lock file maintenance ([3bb6587](https://github.com/nayleen/docker-bunny-ddns/commit/3bb658742903d29bf929054a40b2f8b06502aa9f))
+* **deps:** update dependencies ([779e66c](https://github.com/nayleen/docker-bunny-ddns/commit/779e66c30acee5e9929b7a81a4f26ba12beb09e3))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.17 ([fde72f3](https://github.com/nayleen/docker-bunny-ddns/commit/fde72f38949561310706aea0d716fb2c0079c96f))
+* **deps:** update dependency phpstan/phpstan to ^2.2.6 ([bff8af6](https://github.com/nayleen/docker-bunny-ddns/commit/bff8af6ec96b66d206a700f5e0427c35c7ea55a8))
+* **deps:** update dependency phpunit/phpunit to ^13.2.5 ([6250082](https://github.com/nayleen/docker-bunny-ddns/commit/6250082fd398d0c7418607152f4b498357d447eb))
+* **deps:** update docker/login-action digest to 06fb636 ([2258032](https://github.com/nayleen/docker-bunny-ddns/commit/22580326e423ca99adac69acd283c7bb4d99d9b3))
+* **deps:** update docker/login-action digest to 371161b ([1da2bc4](https://github.com/nayleen/docker-bunny-ddns/commit/1da2bc48d838c5e21acbf9c89b632fe4fa988168))
+* **deps:** update docker/login-action digest to abd2ef4 ([179a870](https://github.com/nayleen/docker-bunny-ddns/commit/179a870df7afe2efb51796bb93b644bd501ca339))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 6d6cc82 ([ad3bcd3](https://github.com/nayleen/docker-bunny-ddns/commit/ad3bcd315ac83c6a371ce8dcd7a2ea52c104e104))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 760572f ([c9980f7](https://github.com/nayleen/docker-bunny-ddns/commit/c9980f727989ac3a7c8382e053f8ac2a7d9c976a))
+
 ## 1.0.0 (2026-07-23)
 
 
