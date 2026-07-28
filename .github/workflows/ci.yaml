@@ -9,11 +9,16 @@ on:
       - .release-please-manifest.json
       - .github/workflows/**
       - src/**
+      - tests/**
       - .dockerignore
+      - .env.example
       - app.php
+      - compose.yaml
       - composer.json
       - composer.lock
       - Dockerfile
+      - phpstan.neon.dist
+      - phpunit.xml.dist
       - release-please-config.json
       - Taskfile.dist.yaml
 

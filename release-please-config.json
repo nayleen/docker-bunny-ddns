@@ -14,6 +14,10 @@
         {
           "path": "deploy/docker-swarm.yaml",
           "type": "generic"
+        },
+        {
+          "path": "deploy/kubernetes.yaml",
+          "type": "generic"
         }
       ],
       "include-component-in-tag": false,

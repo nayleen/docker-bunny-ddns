@@ -11,6 +11,7 @@ use Amp\Http\Client\Request;
 use Amp\Http\Client\Response;
 use BunnyDdns\Client;
 use BunnyDdns\Config;
+use BunnyDdns\Health;
 use BunnyDdns\IpResolver;
 use BunnyDdns\Updater;
 use Closure;
@@ -51,6 +52,7 @@ final class ErrorHandlingTest extends TestCase
         DelegateHttpClient $httpClient,
         bool $updateOnStart = false,
         LoggerInterface $logger = new NullLogger(),
+        ?Health $health = null,
     ): Updater {
         $config = self::config($updateOnStart);
 
@@ -59,6 +61,7 @@ final class ErrorHandlingTest extends TestCase
             new Client($config, $httpClient),
             new IpResolver($httpClient),
             $logger,
+            $health,
         );
     }
 
@@ -224,6 +227,72 @@ final class ErrorHandlingTest extends TestCase
                 && str_contains($record->context['exception']->getMessage(), 'got 500'),
             Level::Error,
         ));
+    }
+
+    #[Test]
+    public function updater_reports_healthy_after_a_successful_update(): void
+    {
+        $responses = [
+            [200, self::ZONE_RESPONSE],
+            [200, "fl=123\nip=203.0.113.1\n"],
+            [204, ''],
+        ];
+        $httpClient = new CallbackHttpClient(
+            static function (Request $request) use (&$responses): Response {
+                [$status, $body] = array_shift($responses)
+                    ?? throw new RuntimeException('Unexpected HTTP request');
+
+                return self::response($request, $status, $body);
+            },
+        );
+        $health = new Health();
+
+        self::updater($httpClient, updateOnStart: true, health: $health)->run();
+
+        self::assertSame([
+            'status' => Health::STATUS_HEALTHY,
+            'ip' => '203.0.113.1',
+            'zones' => ['example.com'],
+        ], Health::query());
+    }
+
+    #[Test]
+    public function updater_reports_unhealthy_when_ip_resolution_fails(): void
+    {
+        $requests = 0;
+        $httpClient = new CallbackHttpClient(
+            static function (Request $request) use (&$requests): Response {
+                return ++$requests === 1
+                    ? self::response($request, 200, self::ZONE_RESPONSE)
+                    : self::response($request, 500);
+            },
+        );
+        $health = new Health();
+
+        self::updater($httpClient, updateOnStart: true, health: $health)->run();
+
+        self::assertSame([
+            'status' => Health::STATUS_UNHEALTHY,
+            'ip' => null,
+            'zones' => ['example.com'],
+        ], Health::query());
+    }
+
+    #[Test]
+    public function updater_stays_starting_until_the_first_check(): void
+    {
+        $httpClient = new CallbackHttpClient(
+            static fn (Request $request): Response => self::response($request, 200, self::ZONE_RESPONSE),
+        );
+        $health = new Health();
+
+        self::updater($httpClient, updateOnStart: false, health: $health)->run();
+
+        self::assertSame([
+            'status' => Health::STATUS_STARTING,
+            'ip' => null,
+            'zones' => ['example.com'],
+        ], Health::query());
     }
 
     #[Test]

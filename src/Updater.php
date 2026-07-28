@@ -35,9 +35,25 @@ final class Updater
         ?Client $client = null,
         private readonly IpResolver $ipResolver = new IpResolver(),
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ?Health $health = null,
     ) {
         $this->client = $client ?? new Client($this->config);
         $this->zones = new Zones();
+    }
+
+    /**
+     * @param Health::STATUS_* $status
+     * @param non-empty-string|null $ip
+     */
+    private function reportHealth(string $status, ?string $ip = null): void
+    {
+        $ip ??= $this->currentIp;
+
+        $this->health?->update(
+            $status,
+            $ip === self::IP_STARTUP_VALUE ? null : $ip,
+            $this->zones->names(),
+        );
     }
 
     private function resolveZoneIds(): void
@@ -67,8 +83,7 @@ final class Updater
                 });
         }
 
-        // awaitAll observes every future, avoiding unhandled errors
-        // from siblings still in flight
+        // Observe every future so sibling errors are handled.
         [$errors] = Amp\Future\awaitAll($futures);
 
         if ($errors !== []) {
@@ -80,35 +95,43 @@ final class Updater
 
     private function updateCheck(): void
     {
-        $ip = Amp\async($this->ipResolver->run(...))->await();
-        assert(is_string($ip) && $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false);
+        $ip = null;
 
-        $changed = $this->currentIp !== $ip;
+        // Keep transient upstream failures from stopping future checks.
+        try {
+            /** @var non-empty-string $ip */
+            $ip = Amp\async($this->ipResolver->run(...))->await();
+            assert($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false);
 
-        if ($changed) {
-            $message = $this->currentIp === self::IP_STARTUP_VALUE
-                ? 'Initial IP address detected ({ip}), updating DNS zones'
-                : "IP address changed ({$this->currentIp} => {ip}), updating DNS zones";
+            $changed = $this->currentIp !== $ip;
 
-            $this->logger->notice($message, [
-                'ip' => $ip,
-                'zones' => $this->zones->names(),
-            ]);
+            if ($changed) {
+                $message = $this->currentIp === self::IP_STARTUP_VALUE
+                    ? 'Initial IP address detected ({ip}), updating DNS zones'
+                    : "IP address changed ({$this->currentIp} => {ip}), updating DNS zones";
 
-            try {
+                $this->logger->notice($message, [
+                    'ip' => $ip,
+                    'zones' => $this->zones->names(),
+                ]);
+
                 $this->updateZones($ip);
                 $this->currentIp = $ip;
 
                 assert($this->currentIp === $ip);
-            } catch (Throwable $error) {
-                $this->logger->error('Failed to update DNS zone records', [
-                    'exception' => $error,
-                    'ip' => $ip,
-                    'zones' => $this->zones->names(),
-                ]);
+            } else {
+                $this->logger->info('IP address unchanged, no update needed');
             }
-        } else {
-            $this->logger->info('IP address unchanged, no update needed');
+
+            $this->reportHealth(Health::STATUS_HEALTHY, $ip);
+        } catch (Throwable $error) {
+            $this->logger->error('Update check failed', [
+                'exception' => $error,
+                'ip' => $ip,
+                'zones' => $this->zones->names(),
+            ]);
+
+            $this->reportHealth(Health::STATUS_UNHEALTHY, $ip);
         }
 
         $this->logger->info('Running next check in {interval} seconds', [
@@ -135,14 +158,14 @@ final class Updater
 
     public function run(): void
     {
-        // resolve zone + A record IDs
         $this->resolveZoneIds();
+
+        $this->reportHealth(Health::STATUS_STARTING);
 
         if ($this->config->updateOnStart) {
             $this->updateCheck();
         }
 
-        // schedule periodic IP + update checks
         EventLoop::unreference(EventLoop::repeat(
             $this->config->updateInterval,
             $this->updateCheck(...),

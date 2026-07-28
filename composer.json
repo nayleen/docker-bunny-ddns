@@ -16,6 +16,7 @@
     "thecodingmachine/safe": "^3.4.0"
   },
   "require-dev": {
+    "amphp/process": "^2.0.0",
     "ergebnis/composer-normalize": "^2.52.0",
     "friendsofphp/php-cs-fixer": "^3.95.17",
     "nayleen/codestandard": "dev-latest",

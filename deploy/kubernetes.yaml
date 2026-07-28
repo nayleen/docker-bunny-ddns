@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bunny-ddns
+  labels:
+    app: bunny-ddns
+spec:
+  replicas: 1
+  # Avoid concurrent updaters during rollouts.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bunny-ddns
+  template:
+    metadata:
+      labels:
+        app: bunny-ddns
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      containers:
+        - name: ddns
+          image: ghcr.io/nayleen/bunny-ddns:1.0.0 # x-release-please-version
+          env:
+            - name: API_KEY_FILE
+              value: /run/secrets/bunny-ddns/api-key
+            - name: LOG_LEVEL
+              value: notice
+            - name: ZONES
+              value: "mydomain.com"
+          volumeMounts:
+            - name: api-key
+              mountPath: /run/secrets/bunny-ddns
+              readOnly: true
+            - name: shm
+              mountPath: /dev/shm
+          # Kubernetes ignores the image's HEALTHCHECK.
+          startupProbe:
+            exec:
+              command: ["php", "/app/src/app.php", "healthcheck"]
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command: ["php", "/app/src/app.php", "healthcheck"]
+            periodSeconds: 30
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+      volumes:
+        - name: api-key
+          secret:
+            secretName: bunny-ddns
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi
+---
+# kubectl create secret generic bunny-ddns --from-literal=api-key=<your-bunny-api-key>
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bunny-ddns
+type: Opaque
+stringData:
+  api-key: "00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000"

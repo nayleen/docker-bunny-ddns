@@ -37,7 +37,7 @@ final class Zones implements Countable, IteratorAggregate
     }
 
     /**
-     * @return non-empty-string[]
+     * @return list<non-empty-string>
      */
     public function names(): array
     {
