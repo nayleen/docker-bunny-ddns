@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.1...v1.1.2) (2026-08-06)
+
+
+### Miscellaneous Chores
+
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 8dfddda ([e037e0d](https://github.com/nayleen/docker-bunny-ddns/commit/e037e0d1b1d831d4b8be0593f805aff6943030a5))
+
 ## [1.1.1](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.0...v1.1.1) (2026-08-05)
 
 
