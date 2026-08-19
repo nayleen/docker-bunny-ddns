@@ -18,7 +18,7 @@
   "require-dev": {
     "amphp/process": "^2.1.0",
     "ergebnis/composer-normalize": "^2.52.0",
-    "friendsofphp/php-cs-fixer": "^3.95.19",
+    "friendsofphp/php-cs-fixer": "^3.95.20",
     "nayleen/codestandard": "dev-latest",
     "phpstan/extension-installer": "^1.4.3",
     "phpstan/phpstan": "^2.2.8",
