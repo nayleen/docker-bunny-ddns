@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.2](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.1...v1.1.2) (2026-08-22)
+
+
+### Miscellaneous Chores
+
+* **deps:** lock file maintenance ([5274042](https://github.com/nayleen/docker-bunny-ddns/commit/52740424ccbaa5769c9a1c15778cb9bd997fa272))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.19 ([2079aab](https://github.com/nayleen/docker-bunny-ddns/commit/2079aab143358216ba9ba03bd454fe82e27d0e54))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.20 ([c003e5e](https://github.com/nayleen/docker-bunny-ddns/commit/c003e5e075138f75c5d76b4dc2a8df40af79c84e))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.21 ([efd777a](https://github.com/nayleen/docker-bunny-ddns/commit/efd777ad3fbe30b7d0fb492295bfeea9fbaa7876))
+* **deps:** update dependency phpstan/phpstan to ^2.2.9 ([b314f7f](https://github.com/nayleen/docker-bunny-ddns/commit/b314f7fcb563296093385bad87fd19b4e48ef388))
+* **deps:** update dependency phpunit/phpunit to ^13.3.0 ([b028b09](https://github.com/nayleen/docker-bunny-ddns/commit/b028b09d933f5cf4dd22366f019adf9a2705fac1))
+* **deps:** update dependency phpunit/phpunit to ^13.3.1 ([be72e39](https://github.com/nayleen/docker-bunny-ddns/commit/be72e39d480771faf5eca1ef3706e7d02cd07880))
+* **deps:** update docker/setup-buildx-action digest to 37fe631 ([4fa9aad](https://github.com/nayleen/docker-bunny-ddns/commit/4fa9aad9d89349524dce81b9bad242502ee5580a))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 030633f ([d8d4db7](https://github.com/nayleen/docker-bunny-ddns/commit/d8d4db755e62fe8ba3d42dc549506ff17a1bbb33))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 8dfddda ([e037e0d](https://github.com/nayleen/docker-bunny-ddns/commit/e037e0d1b1d831d4b8be0593f805aff6943030a5))
+
 ## [1.1.1](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.0...v1.1.1) (2026-08-05)
 
 
