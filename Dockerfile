@@ -1,4 +1,4 @@
-FROM ghcr.io/nayleen/php:8.5@sha256:030633fbc3fda1fa06d418c7ea3220cbc29293f7c9b88cfe0dd4e07d4bce9519
+FROM ghcr.io/nayleen/php:8.5@sha256:9398aa05578147e411b88338349fb813e826524496766a480e16f51208fa5970
 
 COPY --link --chown=1000:1000 ./composer.* /app/src/
 
