@@ -10,7 +10,7 @@ secrets:
 
 services:
   ddns:
-    image: ghcr.io/nayleen/bunny-ddns:1.1.2 # x-release-please-version
+    image: ghcr.io/nayleen/bunny-ddns:1.1.3 # x-release-please-version
     environment:
       API_KEY_FILE: /run/secrets/bunny_api_key
       LOG_LEVEL: notice
