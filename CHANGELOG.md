@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.1.3](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.2...v1.1.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency monolog/monolog to ^3.11.0 ([e15065b](https://github.com/nayleen/docker-bunny-ddns/commit/e15065b5240177d6da2b1f4451adbf45a6fdd47d))
+
+
+### Miscellaneous Chores
+
+* **deps:** lock file maintenance ([836b2b1](https://github.com/nayleen/docker-bunny-ddns/commit/836b2b1c9e4314fb3f0ce018d5e2c9b4a9bbf83f))
+* **deps:** lock file maintenance ([211b266](https://github.com/nayleen/docker-bunny-ddns/commit/211b266f26f74a3beb29f0ad7ff794159e5536ba))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.22 ([5bfae75](https://github.com/nayleen/docker-bunny-ddns/commit/5bfae751f1f81db17731e3c294328b2d9ba432b5))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.23 ([d2aeb46](https://github.com/nayleen/docker-bunny-ddns/commit/d2aeb461250b1dffd85e82e6bfb93f95222d0285))
+* **deps:** update dependency friendsofphp/php-cs-fixer to ^3.95.24 ([e413cf4](https://github.com/nayleen/docker-bunny-ddns/commit/e413cf4b083aaaf47ea3d313f5c3331291e78198))
+* **deps:** update dependency phpstan/phpstan to ^2.2.10 ([fc47bb1](https://github.com/nayleen/docker-bunny-ddns/commit/fc47bb1fb03ee603466e6324a5d1d2a994bb3dc7))
+* **deps:** update dependency phpstan/phpstan to ^2.2.11 ([8759234](https://github.com/nayleen/docker-bunny-ddns/commit/87592348294cea507ad0a09af39a04bec126444a))
+* **deps:** update dependency phpstan/phpstan to ^2.2.12 ([9ddfafd](https://github.com/nayleen/docker-bunny-ddns/commit/9ddfafd28b17b311b8e0149800d001096093996a))
+* **deps:** update dependency phpstan/phpstan to ^2.2.13 ([b4efaf0](https://github.com/nayleen/docker-bunny-ddns/commit/b4efaf02ab00436958cdc205e7c73bab12fb2b6a))
+* **deps:** update dependency phpunit/phpunit to ^13.3.2 ([61270b2](https://github.com/nayleen/docker-bunny-ddns/commit/61270b2b5595a888f4863b25424ee3c47a89f674))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 30c55bc ([02687ab](https://github.com/nayleen/docker-bunny-ddns/commit/02687abd7ef527bb83720a14c9a5667d3ef93da9))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 38e51b0 ([0245d65](https://github.com/nayleen/docker-bunny-ddns/commit/0245d65f137f65c9d9614570d47eef1efed7d18f))
+* **deps:** update ghcr.io/nayleen/php:8.5 docker digest to 9398aa0 ([a226f9b](https://github.com/nayleen/docker-bunny-ddns/commit/a226f9bdc79a91920ca7157d9352253de496c4b1))
+
 ## [1.1.2](https://github.com/nayleen/docker-bunny-ddns/compare/v1.1.1...v1.1.2) (2026-08-22)
 
 
